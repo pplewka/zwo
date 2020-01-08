@@ -1,0 +1,23 @@
+Processing terms: ['denmark', 'sweden', 'bridge']
+Found in 0.06 seconds.
+ 0. score=177 did=1229543 Crossing The Oresund
+ 1. score=126 did=1229484 Identity Crisis for Denmark: Are We Danes or Europeans?
+ 2. score=102 did=1237142 Walking on Air
+ 3. score=92 did=1218647 In Simsbury, the View Is of the Bridge
+ 4. score=79 did=1210109 The Bridge of Hunterdon County
+
+Processing terms: ['olympics', 'opening', 'ceremony']
+Found in 0.46 seconds.
+ 0. score=97 did=1259522 From Sydney To the Bronx, the Winners
+ 1. score=72 did=1230028 Plan to Put Olympics In New York Draws Fire; Site for 2012 Games Outlined by Backers, Including City Hall
+ 2. score=71 did=1232198 NBC's Ratings For Olympics Are Worst Ever
+ 3. score=65 did=1229438 Samaranch's Legacy: An Olympic Savior or a Spoiler?
+ 4. score=52 did=1221996 Children's Books
+
+Processing terms: ['tokyo', 'train', 'disaster']
+Found in 0.28 seconds.
+ 0. score=111 did=1216849 To See Japan, Try Rail Pass And Ryokan
+ 1. score=102 did=1243203 Tokyo Journal; The City Isn't Quaking, but Maybe It Should Be
+ 2. score=91 did=1236859 Tokyo
+ 3. score=71 did=1201724 Tokyo Street Fashion in New York Bows to No Horizon
+ 4. score=70 did=1253846 A Slow Ride, With Reason

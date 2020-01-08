@@ -1,0 +1,6 @@
+sqlite> .version
+unknown command or invalid arguments:  "version". Enter ".help" for help
+sqlite> .Version
+unknown command or invalid arguments:  "Version". Enter ".help" for help
+sqlite> select sqlite_version();
+2.8.17
