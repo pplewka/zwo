@@ -1,14 +1,15 @@
 import sqlite3
 from parser import Document
-from typing import Sequence, Callable
+from typing import Sequence, Callable, TypeVar
 
 DB_NAME = "nyt.sqlite"
 STATEMENT_CACHE = 100000
 STATS_FUNCS = dict()
 DBConnection = sqlite3.Connection
+T = TypeVar('T')
 
 
-def chunks(seq: Sequence, n: int = 1000) -> Sequence[Sequence]:
+def chunks(seq: Sequence[T], n: int = 1000) -> Sequence[Sequence[T]]:
     # we batch 1000 sql commands instead of 10. 10 was extremely slow
     """Divide an iterable into chunks of size n"""
     for i in range(0, len(seq), n):
@@ -36,6 +37,12 @@ def create_db(db_name: str = DB_NAME) -> DBConnection:
         term TEXT NOT NULL,
         tf INTEGER)
     """)
+    connection.execute("""
+        CREATE TABLE boost
+        (did INTEGER,
+        date INTEGER,
+        page INTEGER
+        )""")
     print(f"[+] Created db {DB_NAME}")
     return connection
 
@@ -61,6 +68,23 @@ def insert_documents(connection: DBConnection, documents: Sequence[Document]) ->
         connection.execute("COMMIT")
 
 
+def insert_boost(connection: DBConnection, documents: Sequence[Document]) -> None:
+    """Inserts all values into the boost table"""
+    max_ = len(documents)
+    current = 0
+    print()  # print an extra line, because we will delete lines with printing \r
+    for chunk in chunks(documents):
+
+        connection.execute("BEGIN TRANSACTION")
+        for doc in chunk:
+            connection.execute(
+                "INSERT INTO boost(did, date, page) VALUES (?, ?, ?)", (doc.id, doc.date, doc.page))
+        connection.execute("COMMIT")
+        current += len(chunk)
+        print(f"\r[{current}/{max_}] boost done", end='')
+    print()
+
+
 def insert_tfs(connection: DBConnection, documents: Sequence[Document]) -> None:
     """Inserts all term frequencies into the tfs table"""
     max_ = len(documents)
@@ -81,6 +105,11 @@ def insert_tfs(connection: DBConnection, documents: Sequence[Document]) -> None:
 def get_headline(connection: DBConnection, did: int):
     """Retrieves the headline of a article in the db"""
     return connection.execute("SELECT title FROM docs WHERE did=:did", (did,)).fetchone()[0]
+
+
+def get_max_page(connection: DBConnection) -> int:
+    """Retrieves the maximum page of a article in the db"""
+    return connection.execute("SELECT max_page FROM max_page").fetchone()[0]
 
 
 def collection_statistic(func: Callable) -> Callable:
@@ -120,3 +149,13 @@ def create_and_insert_d(connection: DBConnection) -> None:
         SELECT COUNT(DISTINCT did) AS size FROM tfs
     """)
     print("\r[+] creating table d")
+
+
+@collection_statistic
+def create_and_insert_max_page(connection: DBConnection) -> None:
+    """Create and fills the table max_page with the maximum page number in the collection"""
+    print("\n[-] creating table max_page", end="")
+    connection.execute("""
+    CREATE TABLE max_page AS
+    SELECT MAX(page) AS max_page from boost""")
+    print("\r[+] creating table max_page")

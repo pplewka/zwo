@@ -15,6 +15,7 @@ def parse_dir(directory: str) -> None:
     with open_db() as connection:
         insert_documents(connection, docs)
         insert_tfs(connection, docs)
+        insert_boost(connection, docs)
         compute_statistics(connection)
 
 
