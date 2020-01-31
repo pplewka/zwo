@@ -32,7 +32,7 @@ class InvertedIndex:
     def getDF(self, term: str) -> int:
         """Return the document frequency for a given term."""
         r = self.connection.execute("""
-            SELECT tf from dfs WHERE term = ?
+            SELECT df from dfs WHERE term = ?
         """, (term,))
         return int(r.fetchone()[0])
 
@@ -64,7 +64,7 @@ def create_indices(connection: DBConnection):
     print("\r[+] creating table docs_idx")
     print("\n[-] creating index dfs_idx", end="")
     connection.execute("""
-        CREATE INDEX dfs_idx ON dfs(term, tf)
+        CREATE INDEX dfs_idx ON dfs(term, df)
     """)
     print("\r[+] creating table dfs_idx")
     print("\n[-] creating index dls_idx", end="")
