@@ -106,7 +106,7 @@ def create_and_insert_dfs(connection: DBConnection) -> None:
     print("\n[-] creating table dfs", end="")
     connection.execute("""
         CREATE TABLE dfs AS
-        SELECT term, SUM(tf) AS tf FROM tfs GROUP BY term
+        SELECT term, COUNT(tf) AS df FROM tfs GROUP BY term
     """)
     print("\r[+] creating table dfs")
 
@@ -120,3 +120,15 @@ def create_and_insert_d(connection: DBConnection) -> None:
         SELECT COUNT(DISTINCT did) AS size FROM tfs
     """)
     print("\r[+] creating table d")
+
+
+@collection_statistic
+def create_and_insert_ub(connection: DBConnection) -> None:
+    """Create and fill the table ub, that contains the max term frequencies for each unique term used by the two level WAND query processing to determine the upper bounds."""
+    print("\n[-] creating table ub", end="")
+    connection.execute("""
+        CREATE TABLE ub AS
+        SELECT DISTINCT(term), MAX(tf) AS max FROM tfs GROUP BY term
+    
+    """)
+    print("\r[+] creating table ub")
