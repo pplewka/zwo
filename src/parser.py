@@ -16,7 +16,8 @@ class Document:
     abstract: str
     content: Sequence[str]
     content_counter: Counter
-    title_abstract_counter: Counter
+    title_counter: Counter
+    abstract_counter: Counter
     date: int
     page: int
 
@@ -28,7 +29,8 @@ class Document:
         self.content = content
         # count term frequencies on initialization, saving us a lot of time later.
         self.content_counter = Counter(self.content)
-        self.title_abstract_counter = Counter(Parser.tokenize([self.title, self.abstract]))
+        self.title_counter = Counter(Parser.tokenize([self.title]))
+        self.abstract_counter = Counter(Parser.tokenize([self.abstract]))
         self.date = int(date.replace("T", ""))
         self.page = int(page)
 
@@ -44,7 +46,8 @@ class Document:
         """Returns all rows for the tfs table of this document"""
         for term in self.content_counter.keys():
             yield (self.id, term, self.content_counter[term] * constants.TUNABLE_WEIGHT_CONTENT +
-                   self.title_abstract_counter[term] * constants.TUNABLE_WEIGHT_TITLE)
+                   self.title_counter[term] * constants.TUNABLE_WEIGHT_TITLE + self.abstract_counter[
+                       term] * constants.TUNABLE_WEIGHT_ABSTRACT)
 
 
 class Parser:
