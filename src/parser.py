@@ -95,8 +95,10 @@ def _nytcorpus_to_document(root: Union[XML.Element, XML.ElementTree]) -> Tuple[i
 
         url = pubdata.get('ex-ref')
         # Already cleans out all the HTML Elements
-        content = [par.text for par in body.findall(
-            "./body.content/*[@class='full_text']/p")]
+        content = [*[par.text for par in body.findall(
+            "./body.content/*[@class='full_text']/p")], *
+                   [par.text for par in body.findall(
+                       "./body.content/*[@class='lead_paragraph']/p")]]
     except AttributeError as attr:
         # We can't do much if finding a url or the content fails.
         print("Attribute error for document ID: " + id_, file=stderr)
