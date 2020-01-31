@@ -4,6 +4,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Sequence, Union, Iterable, Tuple, List
 from pathlib import Path
+import constants
 
 
 @dataclass
@@ -13,7 +14,8 @@ class Document:
     title: str
     url: str
     content: Sequence[str]
-    counter: Counter
+    content_counter: Counter
+    title_counter: Counter
 
     def __init__(self, id: int, title: str, url: str, content: Sequence[str]):
         self.id = id
@@ -21,7 +23,8 @@ class Document:
         self.url = url
         self.content = content
         # count term frequencies on initialization, saving us a lot of time later.
-        self.counter = Counter(self.content)
+        self.content_counter = Counter(self.content)
+        self.title_counter = Counter(Parser.tokenize([self.title]))
 
     def __repr__(self):
         from pprint import pformat
@@ -33,8 +36,9 @@ class Document:
 
     def get_tfs_rows(self) -> Iterable:
         """Returns all rows for the tfs table of this document"""
-        for term in self.counter.keys():
-            yield self.id, term, self.counter[term]
+        for term in self.content_counter.keys():
+            yield (self.id, term, self.content_counter[term] * constants.TUNABLE_WEIGHT_CONTENT +
+                   self.title_counter[term] * constants.TUNABLE_WEIGHT_TITLE)
 
 
 class Parser:
