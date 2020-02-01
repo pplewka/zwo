@@ -82,6 +82,10 @@ def get_headline(connection: DBConnection, did: int):
     """Retrieves the headline of a article in the db"""
     return connection.execute("SELECT title FROM docs WHERE did=:did", (did,)).fetchone()[0]
 
+def get_url(connection: DBConnection, did: int):
+    """Retrieves the headline of a article in the db"""
+    return connection.execute("SELECT url FROM docs WHERE did=:did", (did,)).fetchone()[0]
+
 
 def collection_statistic(func: Callable) -> Callable:
     """Decorator Function to mark a function as computing statistics."""

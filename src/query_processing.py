@@ -46,7 +46,7 @@ class QueryProcessor:
         terms = Parser.tokenize([query])
         results = dict()
 
-        print(f'Processing terms: {terms}')
+        # print(f'Processing terms: {terms}')
 
         for t in terms:
             try:
