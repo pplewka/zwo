@@ -110,7 +110,7 @@ def create_and_insert_dfs(connection: DBConnection) -> None:
     print("\n[-] creating table dfs", end="")
     connection.execute("""
         CREATE TABLE dfs AS
-        SELECT term, SUM(tf) AS tf FROM tfs GROUP BY term
+        SELECT term, COUNT(tf) AS df FROM tfs GROUP BY term
     """)
     print("\r[+] creating table dfs")
 
