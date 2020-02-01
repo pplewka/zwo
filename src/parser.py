@@ -4,6 +4,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Sequence, Union, Iterable, Tuple, List
 from pathlib import Path
+import constants
 
 
 @dataclass
@@ -12,16 +13,26 @@ class Document:
     id: int
     title: str
     url: str
+    abstract: str
     content: Sequence[str]
-    counter: Counter
+    content_counter: Counter
+    title_counter: Counter
+    abstract_counter: Counter
+    date: int
+    page: int
 
-    def __init__(self, id: int, title: str, url: str, content: Sequence[str]):
-        self.id = id
+    def __init__(self, id: int, title: str, url: str, content: Sequence[str], abstract: str, date: str, page: int):
+        self.id = int(id)
         self.title = title
         self.url = url
+        self.abstract = abstract
         self.content = content
         # count term frequencies on initialization, saving us a lot of time later.
-        self.counter = Counter(self.content)
+        self.content_counter = Counter(self.content)
+        self.title_counter = Counter(Parser.tokenize([self.title]))
+        self.abstract_counter = Counter(Parser.tokenize([self.abstract]))
+        self.date = int(date.replace("T", ""))
+        self.page = int(page)
 
     def __repr__(self):
         from pprint import pformat
@@ -33,8 +44,10 @@ class Document:
 
     def get_tfs_rows(self) -> Iterable:
         """Returns all rows for the tfs table of this document"""
-        for term in self.counter.keys():
-            yield self.id, term, self.counter[term]
+        for term in self.content_counter.keys():
+            yield (self.id, term, self.content_counter[term] * constants.TUNABLE_WEIGHT_CONTENT +
+                   self.title_counter[term] * constants.TUNABLE_WEIGHT_TITLE + self.abstract_counter[
+                       term] * constants.TUNABLE_WEIGHT_ABSTRACT)
 
 
 class Parser:
@@ -54,7 +67,8 @@ class Parser:
             prospective_doc = _nytcorpus_to_document(XML.parse(input_))
 
         content = Parser.tokenize(prospective_doc[3])
-        return Document(prospective_doc[0], prospective_doc[1], prospective_doc[2], content)
+        return Document(prospective_doc[0], prospective_doc[1], prospective_doc[2], content, prospective_doc[4],
+                        prospective_doc[5], prospective_doc[6])
 
     @staticmethod
     def tokenize(content: List[str]) -> List[str]:
@@ -68,7 +82,7 @@ class Parser:
         return ' '.join([par.lower() for par in cleaned]).split()
 
 
-def _nytcorpus_to_document(root: Union[XML.Element, XML.ElementTree]) -> Tuple[int, str, str, List[str]]:
+def _nytcorpus_to_document(root: Union[XML.Element, XML.ElementTree]) -> Tuple[int, str, str, List[str], str, str, int]:
     """ Simple XML parsing function that extracts our Document object from a given news article.
 
         The content field of the returned document will not be tokenized.
@@ -80,6 +94,8 @@ def _nytcorpus_to_document(root: Union[XML.Element, XML.ElementTree]) -> Tuple[i
     docdata = head.find("./docdata")
     pubdata = head.find("./pubdata")
     id_ = "-1"  # fallback value
+    date = ""
+    page = -1
     try:
         id_ = docdata.find("./doc-id").get('id-string')
         title = head.find("./title")
@@ -88,15 +104,28 @@ def _nytcorpus_to_document(root: Union[XML.Element, XML.ElementTree]) -> Tuple[i
             title = "NO TITLE FOUND"
         else:
             title = title.text
-
+        abstract = body.find("./body.head/abstract/p")
+        if abstract is None:
+            abstract = ""
+        else:
+            abstract = abstract.text
+            if abstract is None:
+                abstract = ""
         url = pubdata.get('ex-ref')
+        date = pubdata.get("date.publication")
+        try:
+            page = int(head.find("./meta[@name='print_page_number']").get("content"))
+        except AttributeError:
+            page = 100
         # Already cleans out all the HTML Elements
-        content = [par.text for par in body.findall(
-            "./body.content/*[@class='full_text']/p")]
+        content = [*[par.text for par in body.findall(
+            "./body.content/*[@class='full_text']/p")]]  # , *
+        #  [par.text for par in body.findall(
+        #     "./body.content/*[@class='lead_paragraph']/p")]]
     except AttributeError as attr:
         # We can't do much if finding a url or the content fails.
         print("Attribute error for document ID: " + id_, file=stderr)
         print(attr, file=stderr)
-        return int(id_), "Error", "Error", []
+        return int(id_), "Error", "Error", [], "Error", "", -1
 
-    return int(id_), title, url, content
+    return int(id_), title, url, content, abstract, date, page

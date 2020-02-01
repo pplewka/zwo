@@ -1,0 +1,40 @@
+1. Boosting the title
+The terms in the title will now be added to tfs with a tunable weight (currently 3 times as normal content terms)
+To do so the Document class in parser.py now also counts terms in the title and later adds them to the content tfs,
+when the tfs table gets created.
+
+2. Boosting the abstract
+Many Documents in the collection feature an "abstract". In this text is a short summary of the content.
+A term in the abstract should be more important than a term in the content, since its the condensed info.
+The abstract will be incorporated exactly as the title-boost, except the tunable weight of the abstract is 2 instead of 3.
+
+3. Boosting pages
+Documents on the first pages are more important than documents on the last page.
+So we store the page of a document in the new "boost" table in th "page" column.
+We also store the maximum page in the collection in the new "max_page" table
+While querying the page of a document will be loaded into the posting.
+In query_processing.py in the QueryProcessor.process method we multiply the score of a document with
+
+    (1 - TUNABLE_WEIGHT_PAGE * (posting.page / self.max_page))
+
+We have to subtract, because a lower posting.page is better and subtracting solves that.
+Here again we have a constant for tuning the effect.
+
+4. Boosting dates
+We store the publication date of a document in the new "boost" table in the "date" column.
+While querying the date of a document will be loaded into the posting.
+In query_processing.py in the QueryProcessor.process method we multiply the score of a document with
+
+     self.get_date_boost(posting.date)
+
+with self.get_date_boost as
+
+    diff = date_obj - self.first_day
+    return ((diff.days / self.max_days) + ADDITIVE_CONSTANT_DATE_BOOST) * TUNABLE_WEIGHT_DATE
+
+self.first_day is 01/01/2000 the first publication day in the collection.
+diff.days / self.max_days how many percent of the year were already over (01/01/2000 ~> 0.0, 31/12/2000 ~> 1.0)
+Because we don't want to lose all documents with percentages near 0 we add the ADDITITVE_CONSTANT_DATE_BOOST = 0.5
+With this documents published in august won't get boosted,  documents published in january can lose up to 50% of
+their score, etc.
+To tune this effect there is again a tuning constant TUNABLE_WEIGHT_DATE.
